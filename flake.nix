@@ -6,16 +6,13 @@
 
   outputs = { self, nixpkgs, flake-utils }:
     flake-utils.lib.eachDefaultSystem (system:
-      let
-        pkgs = import nixpkgs {
-          inherit system;
-        };
+      let pkgs = import nixpkgs { inherit system; };
       in {
         packages.default = pkgs.ocamlPackages.buildDunePackage {
           pname = "landlock";
           version = "n/a";
           src = ./.;
-          nativeBuildInputs = with pkgs.ocamlPackages; [ cmdliner ];
+          nativeBuildInputs = with pkgs.ocamlPackages; [ cmdliner ctypes ];
         };
         devShells.default = pkgs.mkShell {
           inputsFrom = [ self.packages.${system}.default ];

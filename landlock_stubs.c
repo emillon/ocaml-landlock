@@ -31,21 +31,11 @@ static inline int landlock_restrict_self(const int ruleset_fd,
 }
 #endif
 
-value setup_landlock(value unit) {
-  CAMLparam1(unit);
-  struct landlock_ruleset_attr ruleset_attr = {
-      .handled_access_fs =
-          LANDLOCK_ACCESS_FS_EXECUTE | LANDLOCK_ACCESS_FS_WRITE_FILE |
-          LANDLOCK_ACCESS_FS_READ_FILE | LANDLOCK_ACCESS_FS_READ_DIR |
-          LANDLOCK_ACCESS_FS_REMOVE_DIR | LANDLOCK_ACCESS_FS_REMOVE_FILE |
-          LANDLOCK_ACCESS_FS_MAKE_CHAR | LANDLOCK_ACCESS_FS_MAKE_DIR |
-          LANDLOCK_ACCESS_FS_MAKE_REG | LANDLOCK_ACCESS_FS_MAKE_SOCK |
-          LANDLOCK_ACCESS_FS_MAKE_FIFO | LANDLOCK_ACCESS_FS_MAKE_BLOCK |
-          LANDLOCK_ACCESS_FS_MAKE_SYM | LANDLOCK_ACCESS_FS_REFER |
-          LANDLOCK_ACCESS_FS_TRUNCATE,
-      .handled_access_net =
-          LANDLOCK_ACCESS_NET_BIND_TCP | LANDLOCK_ACCESS_NET_CONNECT_TCP,
-  };
+value setup_landlock(value v_p_ruleset_attr) {
+  CAMLparam1(v_p_ruleset_attr);
+  struct landlock_ruleset_attr *p_ruleset_attr =
+      (struct landlock_ruleset_attr *)Nativeint_val(v_p_ruleset_attr);
+  struct landlock_ruleset_attr ruleset_attr = *p_ruleset_attr;
   int abi;
 
   abi = landlock_create_ruleset(NULL, 0, LANDLOCK_CREATE_RULESET_VERSION);
@@ -107,5 +97,5 @@ value setup_landlock(value unit) {
     return 1;
   }
   close(ruleset_fd);
-  CAMLreturn(unit);
+  CAMLreturn(Val_unit);
 }

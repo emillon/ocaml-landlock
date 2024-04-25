@@ -3,7 +3,15 @@
  (libraries cmdliner)
  (foreign_stubs
   (language c)
-  (names landlock_stubs)))
+  (names landlock_stubs))
+ (ctypes
+  (external_library_name none)
+  (headers (include linux/landlock.h))
+  (build_flags_resolver vendored)
+  (type_description
+   (functor bindings)
+   (instance types))
+  (generated_entry_point c)))
 
 (cram
  (deps %{bin:landlock}))
