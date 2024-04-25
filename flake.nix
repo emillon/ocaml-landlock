@@ -12,7 +12,7 @@
           pname = "landlock";
           version = "n/a";
           src = ./.;
-          nativeBuildInputs = with pkgs.ocamlPackages; [ cmdliner ctypes ];
+          propagatedBuildInputs = with pkgs.ocamlPackages; [ cmdliner ctypes ];
         };
         devShells.default = pkgs.mkShell {
           inputsFrom = [ self.packages.${system}.default ];
