@@ -1,5 +1,6 @@
 #define _GNU_SOURCE
 #include <caml/memory.h>
+#include <caml/fail.h>
 #include <fcntl.h>
 #include <linux/landlock.h>
 #include <sys/prctl.h>
@@ -44,28 +45,19 @@ value setup_landlock(value v_ruleset_fd) {
 
   path_beneath.parent_fd = open("/usr", O_PATH | O_CLOEXEC);
   if (path_beneath.parent_fd < 0) {
-    perror("Failed to open file");
-    close(ruleset_fd);
-    return 1;
+caml_failwith("open");
   }
   err = landlock_add_rule(ruleset_fd, LANDLOCK_RULE_PATH_BENEATH, &path_beneath,
                           0);
   close(path_beneath.parent_fd);
   if (err) {
-    perror("Failed to update ruleset");
-    close(ruleset_fd);
-    return 1;
+    caml_failwith("landlock_add_rule");
   }
   if (prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0)) {
-    perror("Failed to restrict privileges");
-    close(ruleset_fd);
-    return 1;
+    caml_failwith("prctl");
   }
   if (landlock_restrict_self(ruleset_fd, 0)) {
-    perror("Failed to enforce ruleset");
-    close(ruleset_fd);
-    return 1;
+    caml_failwith("landlock_restrict_self");
   }
-  close(ruleset_fd);
   CAMLreturn(Val_unit);
 }

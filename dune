@@ -1,6 +1,6 @@
 (executable
  (public_name landlock)
- (libraries cmdliner)
+ (libraries cmdliner unix)
  (foreign_stubs
   (language c)
   (names landlock_stubs))
@@ -13,8 +13,8 @@
    (functor bindings)
    (instance types))
   (function_description
-    (functor bindings)
-    (instance functions))
+   (functor bindings)
+   (instance functions))
   (generated_entry_point c)))
 
 (cram

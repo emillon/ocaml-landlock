@@ -82,17 +82,20 @@ module Ruleset_attr = struct
     p
 end
 
-external setup_landlock_ : int -> unit = "setup_landlock"
+external setup_landlock_ : Unix.file_descr -> unit = "setup_landlock"
 
 let get_abi () =
   C.Functions.landlock_create_ruleset C.Types.sys_landlock_create_ruleset
     Ctypes.null Unsigned.Size_t.zero C.Types.landlock_create_ruleset_version
+
+let int_to_fd (x : int) : Unix.file_descr = Obj.magic x
 
 let create_ruleset p_ruleset_attr =
   C.Functions.landlock_create_ruleset C.Types.sys_landlock_create_ruleset
     p_ruleset_attr
     (Unsigned.Size_t.of_int (Ctypes.sizeof C.Types.ruleset_attr))
     Unsigned.UInt32.zero
+  |> int_to_fd
 
 let setup_landlock () =
   let ruleset_attr : Ruleset_attr.t =
@@ -121,7 +124,9 @@ let setup_landlock () =
   let ruleset_attr = Ruleset_attr.filter ruleset_attr ~abi:(get_abi ()) in
   let p_ruleset_attr = Ruleset_attr.as_ptr ruleset_attr in
   let ruleset_fd = create_ruleset (Ctypes.to_voidp p_ruleset_attr) in
-  setup_landlock_ ruleset_fd
+  Fun.protect
+    (fun () -> setup_landlock_ ruleset_fd)
+    ~finally:(fun () -> Unix.close ruleset_fd)
 
 let can_read path =
   let ok = ref false in
