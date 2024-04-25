@@ -27,13 +27,14 @@ let setup_landlock () =
   let abi = Ruleset.get_abi () in
   let ruleset_attr = Ruleset.Attr.filter ruleset_attr ~abi in
   Ruleset.enforce_rules ruleset_attr
-    ~rules:
-      [ { allowed_access = [ Execute; Read_file; Read_dir ]; parent = "/usr" } ]
+    ~rules:[ { parent = "/usr"; allowed_access = [ Read_file ] } ]
 
 let can_read path =
-  let ok = ref false in
-  In_channel.with_open_bin path (fun _ic -> ok := true);
-  !ok
+  try
+    In_channel.with_open_bin path (fun ic ->
+        let _ = In_channel.input_byte ic in
+        true)
+  with Sys_error _ -> false
 
 let can_write path =
   try Out_channel.with_open_bin path (fun _ic -> true)
@@ -49,7 +50,7 @@ let term =
   in
   if restrict then setup_landlock ();
   check_read "/usr/include/paths.h";
-  check_read "/bin/bash";
+  check_read "/etc/hosts";
   check_write "/tmp/x"
 
 let info = Cmdliner.Cmd.info "landlock"

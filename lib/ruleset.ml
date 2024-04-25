@@ -1,8 +1,11 @@
 open Util
 
 let get_abi () =
-  C.Functions.landlock_create_ruleset C.Types.sys_landlock_create_ruleset
-    Ctypes.null Unsigned.Size_t.zero C.Types.landlock_create_ruleset_version
+  let r, _errno =
+    C.Functions.landlock_create_ruleset C.Types.sys_landlock_create_ruleset
+      Ctypes.null Unsigned.Size_t.zero C.Types.landlock_create_ruleset_version
+  in
+  r
 
 module Attr = struct
   type t = { handled_fs : Access_fs.t list; handled_net : Access_net.t list }
@@ -27,11 +30,13 @@ module Expert = struct
 
   let create_ruleset ruleset_attr =
     let p_ruleset_attr = ruleset_attr |> Attr.as_ptr |> Ctypes.to_voidp in
-    C.Functions.landlock_create_ruleset C.Types.sys_landlock_create_ruleset
-      p_ruleset_attr
-      (Unsigned.Size_t.of_int (Ctypes.sizeof C.Types.ruleset_attr))
-      Unsigned.UInt32.zero
-    |> int_to_fd
+    let fd, _errno =
+      C.Functions.landlock_create_ruleset C.Types.sys_landlock_create_ruleset
+        p_ruleset_attr
+        (Unsigned.Size_t.of_int (Ctypes.sizeof C.Types.ruleset_attr))
+        Unsigned.UInt32.zero
+    in
+    int_to_fd fd
 
   let with_ruleset attrs f =
     let fd = create_ruleset attrs in
@@ -48,22 +53,24 @@ module Expert = struct
     let p_path_beneath =
       path_beneath_attr_as_ptr path_beneath |> Ctypes.to_voidp
     in
-    let err =
+    let err, errno =
       C.Functions.landlock_add_rule C.Types.sys_landlock_add_rule
         (fd_to_int ruleset_fd) C.Types.landlock_rule_path_beneath p_path_beneath
         0
     in
-    if err <> 0 then failwith "landlock_add_rule"
+    if err <> 0 then
+      Printf.ksprintf failwith "landlock_add_rule: %d, errno=%s" err
+        (Signed.SInt.to_string errno)
 
   let restrict_self ruleset_fd =
-    let err =
+    let err, _errno =
       C.Functions.landlock_restrict_self C.Types.sys_landlock_restrict_self
         (fd_to_int ruleset_fd) 0
     in
     if err <> 0 then failwith "landlock_restrict_self"
 
   let no_new_privs () =
-    let err = C.Functions.prctl C.Types.pr_set_no_new_privs 1 0 0 0 in
+    let err, _errno = C.Functions.prctl C.Types.pr_set_no_new_privs 1 0 0 0 in
     if err <> 0 then failwith "prctl"
 end
 

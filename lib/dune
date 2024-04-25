@@ -12,5 +12,6 @@
    (instance types))
   (function_description
    (functor bindings)
-   (instance functions))
+   (instance functions)
+   (errno_policy return_errno))
   (generated_entry_point c)))
