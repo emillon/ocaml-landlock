@@ -1,6 +1,6 @@
 open Landlock
 
-let setup_landlock () =
+let setup_landlock rules =
   let ruleset_attr : Ruleset.Attr.t =
     {
       handled_fs =
@@ -26,32 +26,44 @@ let setup_landlock () =
   in
   let abi = Ruleset.get_abi () in
   let ruleset_attr = Ruleset.Attr.filter ruleset_attr ~abi in
-  Ruleset.enforce_rules ruleset_attr
-    ~rules:[ { parent = "/usr"; allowed_access = [ Read_file ] } ]
+  Ruleset.enforce_rules ruleset_attr ~rules
 
-let can_read path =
-  try
-    In_channel.with_open_bin path (fun ic ->
-        let _ = In_channel.input_byte ic in
-        true)
-  with Sys_error _ -> false
+module Let_syntax = struct
+  let ( let+ ) x f =
+    let open Cmdliner.Term in
+    const f $ x
 
-let can_write path =
-  try Out_channel.with_open_bin path (fun _ic -> true)
-  with Sys_error _ -> false
+  let ( and+ ) tx ty =
+    let pair x y = (x, y) in
+    let open Cmdliner.Term in
+    const pair $ tx $ ty
+end
 
-let check_read path = Printf.printf "can read %s: %b\n" path (can_read path)
-let check_write path = Printf.printf "can write %s: %b\n" path (can_write path)
+let rule allowed_access path =
+  { Landlock.Path_beneath_attr.parent = path; allowed_access }
+
+let ro_rule = rule [ Read_file; Read_dir ]
+let rx_rule = rule [ Read_file; Execute ]
 
 let term =
-  let ( let+ ) x f = Cmdliner.Term.(const f $ x) in
-  let+ restrict =
-    Cmdliner.Arg.value (Cmdliner.Arg.flag (Cmdliner.Arg.info [ "restrict" ]))
+  let open Let_syntax in
+  let+ ro = Cmdliner.Arg.(value & opt_all string [] & info [ "ro" ])
+  and+ rx = Cmdliner.Arg.(value & opt_all string [] & info [ "rx" ])
+  and+ exec =
+    Cmdliner.Arg.value
+      (Cmdliner.Arg.pos_all Cmdliner.Arg.string [] (Cmdliner.Arg.info []))
   in
-  if restrict then setup_landlock ();
-  check_read "/usr/include/paths.h";
-  check_read "/etc/hosts";
-  check_write "/tmp/x"
+  let rules = List.map ro_rule ro @ List.map rx_rule rx in
+  setup_landlock rules;
+  match exec with
+  | [] -> ()
+  | prog :: _ as argv ->
+      let fd =
+        Unix.create_process prog (Array.of_list argv) Unix.stdin Unix.stdout
+          Unix.stderr
+      in
+      let _ = Unix.waitpid [] fd in
+      ()
 
 let info = Cmdliner.Cmd.info "landlock"
 let cmd = Cmdliner.Cmd.v info term

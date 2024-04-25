@@ -30,12 +30,15 @@ module Expert = struct
 
   let create_ruleset ruleset_attr =
     let p_ruleset_attr = ruleset_attr |> Attr.as_ptr |> Ctypes.to_voidp in
-    let fd, _errno =
+    let fd, errno =
       C.Functions.landlock_create_ruleset C.Types.sys_landlock_create_ruleset
         p_ruleset_attr
         (Unsigned.Size_t.of_int (Ctypes.sizeof C.Types.ruleset_attr))
         Unsigned.UInt32.zero
     in
+    if fd < 0 then
+      Printf.ksprintf failwith "landlock_create_ruleset: %d, errno=%s" fd
+        (Signed.SInt.to_string errno);
     int_to_fd fd
 
   let with_ruleset attrs f =
