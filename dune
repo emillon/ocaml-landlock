@@ -1,0 +1,9 @@
+(executable
+ (public_name landlock)
+ (libraries cmdliner)
+ (foreign_stubs
+  (language c)
+  (names landlock_stubs)))
+
+(cram
+ (deps %{bin:landlock}))
