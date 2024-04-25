@@ -31,18 +31,10 @@ static inline int landlock_restrict_self(const int ruleset_fd,
 }
 #endif
 
-value setup_landlock(value v_p_ruleset_attr) {
-  CAMLparam1(v_p_ruleset_attr);
-  struct landlock_ruleset_attr *p_ruleset_attr =
-      (struct landlock_ruleset_attr *)Nativeint_val(v_p_ruleset_attr);
-  struct landlock_ruleset_attr ruleset_attr = *p_ruleset_attr;
-  int ruleset_fd;
+value setup_landlock(value v_ruleset_fd) {
+  CAMLparam1(v_ruleset_fd);
+  int ruleset_fd = Int_val(v_ruleset_fd);
 
-  ruleset_fd = landlock_create_ruleset(&ruleset_attr, sizeof(ruleset_attr), 0);
-  if (ruleset_fd < 0) {
-    perror("Failed to create a ruleset");
-    return 1;
-  }
   int err;
   struct landlock_path_beneath_attr path_beneath = {
       .allowed_access = LANDLOCK_ACCESS_FS_EXECUTE |
