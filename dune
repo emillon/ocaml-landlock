@@ -6,11 +6,15 @@
   (names landlock_stubs))
  (ctypes
   (external_library_name none)
-  (headers (include linux/landlock.h))
+  (headers
+   (include linux/landlock.h unistd.h sys/syscall.h))
   (build_flags_resolver vendored)
   (type_description
    (functor bindings)
    (instance types))
+  (function_description
+    (functor bindings)
+    (instance functions))
   (generated_entry_point c)))
 
 (cram

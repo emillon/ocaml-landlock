@@ -36,28 +36,6 @@ value setup_landlock(value v_p_ruleset_attr) {
   struct landlock_ruleset_attr *p_ruleset_attr =
       (struct landlock_ruleset_attr *)Nativeint_val(v_p_ruleset_attr);
   struct landlock_ruleset_attr ruleset_attr = *p_ruleset_attr;
-  int abi;
-
-  abi = landlock_create_ruleset(NULL, 0, LANDLOCK_CREATE_RULESET_VERSION);
-  if (abi < 0) {
-    /* Degrades gracefully if Landlock is not handled. */
-    perror("The running kernel does not enable to use Landlock");
-    return 0;
-  }
-  switch (abi) {
-  case 1:
-    /* Removes LANDLOCK_ACCESS_FS_REFER for ABI < 2 */
-    ruleset_attr.handled_access_fs &= ~LANDLOCK_ACCESS_FS_REFER;
-    __attribute__((fallthrough));
-  case 2:
-    /* Removes LANDLOCK_ACCESS_FS_TRUNCATE for ABI < 3 */
-    ruleset_attr.handled_access_fs &= ~LANDLOCK_ACCESS_FS_TRUNCATE;
-    __attribute__((fallthrough));
-  case 3:
-    /* Removes network support for ABI < 4 */
-    ruleset_attr.handled_access_net &=
-        ~(LANDLOCK_ACCESS_NET_BIND_TCP | LANDLOCK_ACCESS_NET_CONNECT_TCP);
-  }
   int ruleset_fd;
 
   ruleset_fd = landlock_create_ruleset(&ruleset_attr, sizeof(ruleset_attr), 0);
