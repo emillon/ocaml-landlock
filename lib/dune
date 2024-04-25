@@ -1,6 +1,6 @@
-(executable
+(library
  (public_name landlock)
- (libraries cmdliner unix)
+ (libraries unix)
  (ctypes
   (external_library_name none)
   (headers
@@ -14,6 +14,3 @@
    (functor bindings)
    (instance functions))
   (generated_entry_point c)))
-
-(cram
- (deps %{bin:landlock}))
