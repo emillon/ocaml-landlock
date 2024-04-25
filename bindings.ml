@@ -59,6 +59,8 @@ module Types (X : Ctypes.TYPE) = struct
   let sys_landlock_create_ruleset =
     X.constant "SYS_landlock_create_ruleset" X.int
 
+  let sys_landlock_restrict_self = X.constant "SYS_landlock_restrict_self" X.int
+
   let landlock_create_ruleset_version =
     X.constant "LANDLOCK_CREATE_RULESET_VERSION" X.uint32_t
 end
@@ -67,4 +69,7 @@ module Functions (X : Ctypes.FOREIGN) = struct
   let landlock_create_ruleset =
     X.foreign "syscall"
       Ctypes.(X.(int @-> ptr void @-> size_t @-> uint32_t @-> returning int))
+
+  let landlock_restrict_self =
+    X.foreign "syscall" Ctypes.(X.(int @-> int @-> int @-> returning int))
 end

@@ -88,7 +88,8 @@ let get_abi () =
   C.Functions.landlock_create_ruleset C.Types.sys_landlock_create_ruleset
     Ctypes.null Unsigned.Size_t.zero C.Types.landlock_create_ruleset_version
 
-let int_to_fd (x : int) : Unix.file_descr = Obj.magic x
+let int_to_fd : int -> Unix.file_descr = Obj.magic
+let fd_to_int : Unix.file_descr -> int = Obj.magic
 
 let create_ruleset p_ruleset_attr =
   C.Functions.landlock_create_ruleset C.Types.sys_landlock_create_ruleset
@@ -96,6 +97,13 @@ let create_ruleset p_ruleset_attr =
     (Unsigned.Size_t.of_int (Ctypes.sizeof C.Types.ruleset_attr))
     Unsigned.UInt32.zero
   |> int_to_fd
+
+let restrict_self ruleset_fd =
+  let err =
+    C.Functions.landlock_restrict_self C.Types.sys_landlock_restrict_self
+      (fd_to_int ruleset_fd) 0
+  in
+  if err <> 0 then failwith "landlock_restrict_self"
 
 let setup_landlock () =
   let ruleset_attr : Ruleset_attr.t =
@@ -125,7 +133,9 @@ let setup_landlock () =
   let p_ruleset_attr = Ruleset_attr.as_ptr ruleset_attr in
   let ruleset_fd = create_ruleset (Ctypes.to_voidp p_ruleset_attr) in
   Fun.protect
-    (fun () -> setup_landlock_ ruleset_fd)
+    (fun () ->
+      setup_landlock_ ruleset_fd;
+      restrict_self ruleset_fd)
     ~finally:(fun () -> Unix.close ruleset_fd)
 
 let can_read path =
