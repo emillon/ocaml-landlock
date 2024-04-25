@@ -3,7 +3,6 @@
 #include <caml/memory.h>
 #include <fcntl.h>
 #include <linux/landlock.h>
-#include <sys/prctl.h>
 #include <sys/syscall.h>
 #include <unistd.h>
 
@@ -37,9 +36,6 @@ value setup_landlock(value v_ruleset_fd) {
   close(path_beneath.parent_fd);
   if (err) {
     caml_failwith("landlock_add_rule");
-  }
-  if (prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0)) {
-    caml_failwith("prctl");
   }
   CAMLreturn(Val_unit);
 }

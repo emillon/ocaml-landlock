@@ -105,6 +105,10 @@ let restrict_self ruleset_fd =
   in
   if err <> 0 then failwith "landlock_restrict_self"
 
+let no_new_privs () =
+  let err = C.Functions.prctl C.Types.pr_set_no_new_privs 1 0 0 0 in
+  if err <> 0 then failwith "prctl"
+
 let setup_landlock () =
   let ruleset_attr : Ruleset_attr.t =
     {
@@ -135,6 +139,7 @@ let setup_landlock () =
   Fun.protect
     (fun () ->
       setup_landlock_ ruleset_fd;
+      no_new_privs ();
       restrict_self ruleset_fd)
     ~finally:(fun () -> Unix.close ruleset_fd)
 

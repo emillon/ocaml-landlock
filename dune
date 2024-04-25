@@ -7,7 +7,7 @@
  (ctypes
   (external_library_name none)
   (headers
-   (include linux/landlock.h unistd.h sys/syscall.h))
+   (include linux/landlock.h unistd.h sys/syscall.h sys/prctl.h))
   (build_flags_resolver vendored)
   (type_description
    (functor bindings)
