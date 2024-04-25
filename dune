@@ -1,13 +1,11 @@
 (executable
  (public_name landlock)
  (libraries cmdliner unix)
- (foreign_stubs
-  (language c)
-  (names landlock_stubs))
  (ctypes
   (external_library_name none)
   (headers
-   (include linux/landlock.h unistd.h sys/syscall.h sys/prctl.h))
+   (preamble
+    "#define _GNU_SOURCE\n#include <linux/landlock.h>\n#include <unistd.h>\n#include <sys/syscall.h>\n#include<sys/prctl.h>\n#include <sys/fcntl.h>"))
   (build_flags_resolver vendored)
   (type_description
    (functor bindings)
