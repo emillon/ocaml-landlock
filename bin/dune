@@ -1,3 +1,4 @@
-(executable
- (public_name landlock)
+(executables
+ (names demo sandbox)
+ (public_names - landlock-opam-sandbox)
  (libraries cmdliner landlock unix))

@@ -1,2 +1,2 @@
 (cram
- (deps %{bin:landlock}))
+ (deps ../bin/demo.exe %{bin:landlock-opam-sandbox}))
