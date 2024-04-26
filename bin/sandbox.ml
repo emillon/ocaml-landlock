@@ -22,16 +22,46 @@ let term =
   in
   let operation = Operation.of_string operation_s in
   let rules =
-    let rx_usr =
-      {
-        Landlock.Path_beneath_attr.parent = "/usr";
-        allowed_access = [ Read_file; Execute ];
-      }
+    let rule parent allowed_access =
+      { Landlock.Path_beneath_attr.parent; allowed_access }
     in
+    let rx = Landlock.Access_fs.[ Read_file; Execute; Read_dir ] in
+    let write =
+      Landlock.Access_fs.
+        [
+          Make_dir;
+          Make_reg;
+          Write_file;
+          Truncate;
+          Remove_dir;
+          Remove_file;
+          Make_sym;
+          Refer;
+        ]
+    in
+    let rx_usr = rule "/usr" rx in
+    let cwd = Sys.getcwd () in
+    let opam_switch_prefix r =
+      match Sys.getenv_opt "OPAM_SWITCH_PREFIX" with
+      | Some dir -> [ rule dir r ]
+      | None -> []
+    in
+    let tmp = Filename.get_temp_dir_name () in
+    let read = Landlock.Access_fs.[ Read_dir; Read_file ] in
     match operation with
-    | Build -> [ rx_usr ]
+    | Build ->
+        opam_switch_prefix rx
+        @ [
+            rx_usr;
+            rule cwd write;
+            rule tmp write;
+            rule tmp read;
+            rule "/dev/null" [ Read_file; Write_file ];
+          ]
     | Remove -> [ rx_usr ]
-    | Install -> [ rx_usr ]
+    | Install ->
+        opam_switch_prefix rx @ opam_switch_prefix write
+        @ [ rule cwd rx; rx_usr; rule tmp write; rule tmp read ]
   in
   let abi = Landlock.Ruleset.get_abi () in
   let attrs : Landlock.Ruleset.Attr.t =
