@@ -16,23 +16,23 @@ type t =
   | Truncate
 
 let to_int =
-  let open C.Types in
+  let open C.Types.Access_fs in
   function
-  | Execute -> landlock_access_fs_execute
-  | Write_file -> landlock_access_fs_write_file
-  | Read_file -> landlock_access_fs_read_file
-  | Read_dir -> landlock_access_fs_read_dir
-  | Remove_dir -> landlock_access_fs_remove_dir
-  | Remove_file -> landlock_access_fs_remove_file
-  | Make_char -> landlock_access_fs_make_char
-  | Make_dir -> landlock_access_fs_make_dir
-  | Make_reg -> landlock_access_fs_make_reg
-  | Make_sock -> landlock_access_fs_make_sock
-  | Make_fifo -> landlock_access_fs_make_fifo
-  | Make_block -> landlock_access_fs_make_block
-  | Make_sym -> landlock_access_fs_make_sym
-  | Refer -> landlock_access_fs_refer
-  | Truncate -> landlock_access_fs_truncate
+  | Execute -> execute
+  | Write_file -> write_file
+  | Read_file -> read_file
+  | Read_dir -> read_dir
+  | Remove_dir -> remove_dir
+  | Remove_file -> remove_file
+  | Make_char -> make_char
+  | Make_dir -> make_dir
+  | Make_reg -> make_reg
+  | Make_sock -> make_sock
+  | Make_fifo -> make_fifo
+  | Make_block -> make_block
+  | Make_sym -> make_sym
+  | Refer -> refer
+  | Truncate -> truncate
 
 let supported_in ~abi = function
   | Refer -> abi >= 2

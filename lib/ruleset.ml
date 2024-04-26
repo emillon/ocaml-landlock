@@ -2,7 +2,7 @@ open Util
 
 let get_abi () =
   let r, _errno =
-    C.Functions.landlock_create_ruleset C.Types.sys_landlock_create_ruleset
+    C.Functions.Landlock.create_ruleset C.Types.Syscall.create_ruleset
       Ctypes.null Unsigned.Size_t.zero C.Types.landlock_create_ruleset_version
   in
   r
@@ -18,10 +18,10 @@ module Attr = struct
 
   let as_ptr { handled_fs; handled_net } =
     let open Ctypes in
-    let p = allocate_n C.Types.ruleset_attr ~count:1 in
-    p |-> C.Types.handled_access_fs <-@ list_to_int Access_fs.to_int handled_fs;
-    p |-> C.Types.handled_access_net
-    <-@ list_to_int Access_net.to_int handled_net;
+    let module C = C.Types.Ruleset_attr in
+    let p = allocate_n C.typ ~count:1 in
+    p |-> C.handled_access_fs <-@ list_to_int Access_fs.to_int handled_fs;
+    p |-> C.handled_access_net <-@ list_to_int Access_net.to_int handled_net;
     p
 end
 
@@ -31,9 +31,9 @@ module Expert = struct
   let create_ruleset ruleset_attr =
     let p_ruleset_attr = ruleset_attr |> Attr.as_ptr |> Ctypes.to_voidp in
     let fd, errno =
-      C.Functions.landlock_create_ruleset C.Types.sys_landlock_create_ruleset
+      C.Functions.Landlock.create_ruleset C.Types.Syscall.create_ruleset
         p_ruleset_attr
-        (Unsigned.Size_t.of_int (Ctypes.sizeof C.Types.ruleset_attr))
+        (Unsigned.Size_t.of_int (Ctypes.sizeof C.Types.Ruleset_attr.typ))
         Unsigned.UInt32.zero
     in
     if fd < 0 then
@@ -47,9 +47,10 @@ module Expert = struct
 
   let path_beneath_attr_as_ptr { Path_beneath_attr.allowed_access; parent } =
     let open Ctypes in
-    let p = allocate_n C.Types.path_beneath_attr ~count:1 in
-    p |-> C.Types.allowed_access <-@ list_to_int Access_fs.to_int allowed_access;
-    p |-> C.Types.parent_fd <-@ fd_to_int parent;
+    let module C = C.Types.Path_beneath_attr in
+    let p = allocate_n C.typ ~count:1 in
+    p |-> C.allowed_access <-@ list_to_int Access_fs.to_int allowed_access;
+    p |-> C.parent_fd <-@ fd_to_int parent;
     p
 
   let add_rule ruleset_fd path_beneath =
@@ -57,7 +58,7 @@ module Expert = struct
       path_beneath_attr_as_ptr path_beneath |> Ctypes.to_voidp
     in
     let err, errno =
-      C.Functions.landlock_add_rule C.Types.sys_landlock_add_rule
+      C.Functions.Landlock.add_rule C.Types.Syscall.add_rule
         (fd_to_int ruleset_fd) C.Types.landlock_rule_path_beneath p_path_beneath
         0
     in
@@ -67,7 +68,7 @@ module Expert = struct
 
   let restrict_self ruleset_fd =
     let err, _errno =
-      C.Functions.landlock_restrict_self C.Types.sys_landlock_restrict_self
+      C.Functions.Landlock.restrict_self C.Types.Syscall.restrict_self
         (fd_to_int ruleset_fd) 0
     in
     if err <> 0 then failwith "landlock_restrict_self"
