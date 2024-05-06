@@ -1,4 +1,4 @@
 (executables
- (names demo sandbox)
- (public_names - landlock-opam-sandbox)
+ (names demo sandbox abi)
+ (public_names - landlock-opam-sandbox -)
  (libraries cmdliner landlock unix))
